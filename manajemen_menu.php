@@ -18,6 +18,7 @@ if (!isset($_SESSION['csrf_token'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manajemen Menu - Admin</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="ChatGPT Image May 2, 2026, 11_39_59 AM.png">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background-color: #f5f0e8; font-family: Arial, sans-serif; }

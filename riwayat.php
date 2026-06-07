@@ -15,6 +15,7 @@ $user_id = $_SESSION['user_id'];
     <meta charset="UTF-8">
     <title>Riwayat Pesanan - Pemesanan Makanan</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="ChatGPT Image May 2, 2026, 11_39_59 AM.png">
     <style>
         body {
             background-color: #f5f0e8;

@@ -35,6 +35,7 @@ $detail_result = mysqli_stmt_get_result($stmt2);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pesanan Berhasil</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="ChatGPT Image May 2, 2026, 11_39_59 AM.png">
     <style>
         body {
             background-color: #2d4a3e;

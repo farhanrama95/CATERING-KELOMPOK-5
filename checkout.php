@@ -31,6 +31,7 @@ $total_fmt = number_format($total_belanja, 0, ',', '.');
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout - Chandra Catering</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="ChatGPT Image May 2, 2026, 11_39_59 AM.png">
     <style>
         body { background-color: #f5f0e8; margin: 0; font-family: Arial, sans-serif; }
  

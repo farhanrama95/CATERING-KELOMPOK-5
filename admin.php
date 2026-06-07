@@ -16,6 +16,7 @@ if (empty($_SESSION['status_login']) || $_SESSION['role'] !== 'admin') {
     <meta charset="UTF-8">
     <title>Dashboard Admin - Pesanan Masuk</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="ChatGPT Image May 2, 2026, 11_39_59 AM.png">
     <style>
         .navbar-admin {
             background-color: #1a3028;
