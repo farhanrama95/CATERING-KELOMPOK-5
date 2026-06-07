@@ -232,9 +232,6 @@ table {
 }
  
 @media(max-width: 768px) {
-    .login-wrapper {
-        max-width: 100%;
-    }
  
     .login-left {
         width: 100%;

@@ -224,7 +224,7 @@ $nama_lengkap = htmlspecialchars($_SESSION['nama_lengkap']);
 <div class="promo-section">
     <h3>🔥 Promo Spesial Hari Ini!</h3>
     <img src="promo.png" alt="Banner Promo"
-         style="width:100%; height:300px; object-fit:cover; border-radius:8px 8px 0 0; cursor:zoom-in; display:block;"
+         style="width:100%; object-fit:cover; border-radius:8px 8px 0 0; cursor:zoom-in; display:block;"
          onclick="bukaModal(this.src)">
     <div class="promo-text">
         <strong>Diskon Khusus Pelanggan Chandra Catering</strong><br>

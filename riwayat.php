@@ -73,6 +73,7 @@ $user_id = $_SESSION['user_id'];
             margin-top: 10px;
             box-shadow: 0 2px 8px rgba(45,74,62,0.12);
             border: 1px solid #d6e8d6;
+            overflow-x: auto;
         }
         .table-riwayat {
             width: 100%;

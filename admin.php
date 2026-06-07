@@ -250,7 +250,7 @@ if (empty($_SESSION['status_login']) || $_SESSION['role'] !== 'admin') {
     </nav>
 
     <div class="container container--wide">
-        <h2>Daftar Pesanan Masuk</h2>
+        <h2 style="color:white">Daftar Pesanan Masuk</h2>
         <div class="admin-container">
             <table class="table-admin">
                 <thead>
