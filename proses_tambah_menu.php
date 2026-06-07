@@ -12,7 +12,7 @@ use Cloudinary\Api\Upload\UploadApi;
 Configuration::instance([
     'cloud' => [
         'cloud_name' => 'rocket', 
-        'api_key'    => '215114387294939',   
+        'api_key'    => '215114387294939',       // ganti
         'api_secret' => 'IB_ETMM2mqL6aMdqXMsDLHlfrss',   
     ],
     'url' => [
