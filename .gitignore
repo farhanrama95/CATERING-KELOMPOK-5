@@ -5,3 +5,5 @@ koneksi.php
 Thumbs.db
 *.log
 error_log
+composer.json
+composer.lock
