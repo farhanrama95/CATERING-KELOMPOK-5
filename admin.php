@@ -19,32 +19,110 @@ if (empty($_SESSION['status_login']) || $_SESSION['role'] !== 'admin') {
     <style>
         .navbar-admin {
             background-color: #1a3028;
-            padding: 15px 30px;
+            padding: 0 20px;
             color: white;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            height: 56px;
             position: sticky;
             top: 0;
             z-index: 1000;
         }
- 
-        /* FIXED: Navbar responsive for mobile */
-        @media (max-width: 768px) {
-            .navbar-admin {
-                flex-direction: column;
-                gap: 10px;
-                padding: 14px 20px;
-                text-align: center;
+
+        .logo { 
+            color: white; 
+            font-weight: bold; 
+            font-size: 16px; 
+        }
+
+        /* Hamburger button — hanya muncul di HP */
+        .hamburger {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 6px;
+        }
+
+        .hamburger:hover { background: rgba(255,255,255,0.1); }
+
+        /* Menu desktop */
+        .nav-menu {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            list-style: none;
+        }
+
+        .nav-menu a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .nav-menu a:hover { text-decoration: underline; }
+
+        /* === RESPONSIVE MOBILE === */
+        @media (max-width: 767px) {
+            .hamburger {
+                display: flex;  /* tampilkan tombol hamburger */
             }
-            .navbar-admin .menu {
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: center;
-                gap: 8px;
+
+            .nav-menu {
+                display: none;  /* sembunyikan menu */
+                position: absolute;
+                top: 56px;
+                left: 0;
+                right: 0;
+                background-color: #1a3028;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0;
+                padding: 8px 0;
+                border-top: 1px solid rgba(255,255,255,0.1);
+                z-index: 999;
+            }
+
+            .nav-menu.open {
+                display: flex;  
+            }
+
+            .nav-menu li { width: 100%; }
+
+            .nav-menu a {
+                display: block;
+                padding: 14px 20px;
+                border-bottom: 1px solid rgba(255,255,255,0.06);
+                font-size: 15px;
+            }
+
+            .nav-menu a:hover {
+                background: rgba(255,255,255,0.08);
+                text-decoration: none;
             }
         }
- 
+
+        .btn-logout {
+            background: #c93b1d;
+            padding: 6px 12px;
+            border-radius: 4px;
+            color: white;
+            text-decoration: none;
+        }
+
+        @media (max-width: 767px) {
+            .btn-logout {
+                margin: 8px 16px;
+                padding: 12px 20px;
+                border-radius: 6px;
+                text-align: center;
+            }
+        }
+
         .admin-container {
             padding: 20px;
             background: white;
@@ -151,18 +229,25 @@ if (empty($_SESSION['status_login']) || $_SESSION['role'] !== 'admin') {
         }
     </style>
 </head>
-<!-- FIXED: Moved background-color to style block above, not inline -->
+
 <body style="background-color: #4a5d4e;">
     <nav class="navbar-admin">
         <div class="logo">👨‍🍳 Admin</div>
-        <div class="menu">
-            <a href="admin.php" style="color:white; text-decoration:none; font-weight:bold;">📋 Pesanan Masuk</a>
-            <a href="manajemen_menu.php" style="color:white; text-decoration:none; font-weight:bold;">🍽️ Kelola Menu</a>
-            <a href="laporan_harian.php" style="color:white; font-weight:bold;">📊 Laporan Harian</a>
-            <a href="logout.php" class="btn-logout">Logout</a>
-        </div>
+
+        <!-- Tombol hamburger (muncul di HP) -->
+        <button class="hamburger" id="btn-hamburger" 
+                onclick="toggleMenu()" aria-label="Buka menu">
+            ☰
+        </button>
+
+        <!-- Menu navigasi -->
+        <ul class="nav-menu" id="nav-menu">
+            <li><a href="manajemen_menu.php">🍽️ Kelola Menu</a></li>
+            <li><a href="laporan_harian.php">📊 Laporan Harian</a></li>
+            <li><a href="logout.php" class="btn-logout">Logout</a></li>
+        </ul>
     </nav>
- 
+
     <div class="container container--wide">
         <h2>Daftar Pesanan Masuk</h2>
         <div class="admin-container">
@@ -248,6 +333,28 @@ if (empty($_SESSION['status_login']) || $_SESSION['role'] !== 'admin') {
             </table>
         </div>
     </div>
+
+    <script>
+ 
+        function toggleMenu() {
+            const menu   = document.getElementById('nav-menu');
+            const tombol = document.getElementById('btn-hamburger');
+            menu.classList.toggle('open');
+       
+            tombol.textContent = menu.classList.contains('open') ? '✕' : '☰';
+        }
+
+        // Tutup menu jika klik di luar navbar
+        document.addEventListener('click', function(e) {
+            const navbar = document.querySelector('.navbar-admin');
+            const menu   = document.getElementById('nav-menu');
+            if (!navbar.contains(e.target)) {
+                menu.classList.remove('open');
+                document.getElementById('btn-hamburger').textContent = '☰';
+            }
+        });
+
+    </script>
 </body>
 </html>
  

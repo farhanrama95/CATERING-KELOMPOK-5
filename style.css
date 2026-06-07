@@ -246,12 +246,10 @@ table {
         width: 100%;
         padding: 30px;
     }
- 
+
     .navbar {
-        flex-direction: column;
         gap: 10px;
         padding: 14px 20px;
-        text-align: center;
     }
  
     .navbar .menu {
