@@ -73,7 +73,7 @@ $nama_lengkap = htmlspecialchars($_SESSION['nama_lengkap']);
 
         @media (max-width: 767px) {
             .navbar { padding: 0 20px; }
-            .hamburger { display: flex; align-items: center; justify-content: center;}
+            .hamburger { display: flex; }
             .nav-menu {
                 display: none;
                 position: absolute;

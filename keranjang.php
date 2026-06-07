@@ -46,6 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['ak
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Keranjang - Pemesanan Makanan</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="ChatGPT Image May 2, 2026, 11_39_59 AM.png">
     <style>
         body {
             background-color: #f5f0e8;

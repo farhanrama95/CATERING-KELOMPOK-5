@@ -231,9 +231,8 @@ table {
     min-width: 560px;
 }
  
-@media (max-width: 768px) {
+@media(max-width: 768px) {
     .login-wrapper {
-        flex-direction: column;
         max-width: 100%;
     }
  
@@ -248,6 +247,8 @@ table {
     }
 
     .navbar {
+        display: flex;
+        flex-direction: row;
         gap: 10px;
         padding: 14px 20px;
     }
