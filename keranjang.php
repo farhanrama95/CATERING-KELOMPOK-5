@@ -1,4 +1,6 @@
 <?php
+require_once 'guard_pelanggan.php';
+
 session_start();
 include 'koneksi.php';
  
