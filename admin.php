@@ -6,6 +6,10 @@ if (empty($_SESSION['status_login']) || $_SESSION['role'] !== 'admin') {
     header("Location: home.php");
     exit;
 }
+
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -187,6 +191,7 @@ if (empty($_SESSION['status_login']) || $_SESSION['role'] !== 'admin') {
                         <td><span class="badge <?= $badgeClass ?>"><?= $status ?></span></td>
                         <td>
                             <form action="update_status.php" method="POST" class="status-form">
+                                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
                                 <input type="hidden" name="order_id" value="<?= $id ?>">
                                 <select name="status_pesanan">
                                     <option value="menunggu pembayaran" <?= $row['status_pesanan'] == 'menunggu pembayaran' ? 'selected' : '' ?>>Menunggu Pembayaran</option>
@@ -201,6 +206,7 @@ if (empty($_SESSION['status_login']) || $_SESSION['role'] !== 'admin') {
                             <div class="action-cell">
                                 <a href="detail_pesanan.php?id=<?= $id ?>" class="btn-detail">Lihat Detail</a>
                                 <form action="hapus_order.php" method="POST" onsubmit="return confirm('Yakin ingin menghapus pesanan #<?= $id ?>?')">
+                                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
                                     <input type="hidden" name="order_id" value="<?= $id ?>">
                                     <button type="submit" class="btn-hapus">Hapus</button>
                                 </form>

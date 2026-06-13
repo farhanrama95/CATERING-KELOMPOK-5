@@ -1,7 +1,6 @@
 <?php
 require_once 'guard_pelanggan.php';
 
-session_start();
 include 'koneksi.php';
  
 // FIXED: Use empty() for stricter session check
@@ -13,7 +12,7 @@ if (empty($_SESSION['status_login']) || empty($_SESSION['keranjang'])) {
 $total_belanja = 0;
 foreach ($_SESSION['keranjang'] as $id_menu => $jumlah) {
     // FIXED: SQL injection — use prepared statement instead of string interpolation
-    $stmt = mysqli_prepare($koneksi, "SELECT harga FROM menus WHERE id = ?");
+    $stmt = mysqli_prepare($koneksi, "SELECT harga FROM menus WHERE id_menus = ?");
     mysqli_stmt_bind_param($stmt, "i", $id_menu);
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
@@ -145,7 +144,7 @@ $total_fmt = number_format($total_belanja, 0, ',', '.');
 <div class="container">
     <h2>Penyelesaian Pesanan</h2>
  
-    <form action="proses_checkout.php" method="POST" enctype="multipart/form-data">
+    <form action="proses_checkout.php" method="POST" enctype="multipart/form-data" onsubmit="return validasiForm()">
  
         <div class="checkout-box">
             <div class="form-group">
@@ -178,7 +177,7 @@ $total_fmt = number_format($total_belanja, 0, ',', '.');
                         <div class="icon">🧡</div><div class="nama">ShopeePay</div>
                     </div>
                 </div>
-                <input type="hidden" name="metode_pembayaran" id="metode_input" required>
+                <input type="hidden" name="metode_pembayaran" id="metode_input">
  
                 <!-- PANEL COD -->
                 <div class="panel-bayar" id="panel-COD">
@@ -365,6 +364,15 @@ $total_fmt = number_format($total_belanja, 0, ',', '.');
         }
     }
  
+    function validasiForm() {
+        var metode = document.getElementById('metode_input').value;
+        if (!metode) {
+            alert('Silakan pilih metode pembayaran terlebih dahulu.');
+            return false;
+        }
+        return true;
+    }
+
     function salin(teks, idNotif) {
         navigator.clipboard.writeText(teks).then(function() {
             var el = document.getElementById(idNotif);
@@ -379,4 +387,3 @@ $total_fmt = number_format($total_belanja, 0, ',', '.');
  
 </body>
 </html>
- 

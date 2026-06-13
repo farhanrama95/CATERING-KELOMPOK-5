@@ -1,32 +1,31 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) session_start();
 include 'koneksi.php';
- 
-if (!isset($_SESSION['status_login'])) {
+
+if (empty($_SESSION['status_login'])) {
     header("Location: index.php");
     exit;
 }
- 
+
+// Ambil data order terakhir milik user ini
 $user_id = (int)$_SESSION['user_id'];
- 
-$stmt = mysqli_prepare($koneksi, "SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC LIMIT 1");
+$stmt = mysqli_prepare($koneksi, "SELECT * FROM orders WHERE id_users = ? ORDER BY id_orders DESC LIMIT 1");
 mysqli_stmt_bind_param($stmt, "i", $user_id);
 mysqli_stmt_execute($stmt);
-$result = mysqli_stmt_get_result($stmt);
-$order  = mysqli_fetch_assoc($result);
+$order = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
 mysqli_stmt_close($stmt);
- 
-if (!$order) {
-    header("Location: home.php");
-    exit;
-}
- 
-$order_id = (int)$order['id'];
- 
-$stmt2 = mysqli_prepare($koneksi, "SELECT od.*, m.nama_makanan FROM order_details od JOIN menus m ON od.menu_id = m.id WHERE od.order_id = ?");
-mysqli_stmt_bind_param($stmt2, "i", $order_id);
+
+// Ambil detail item pesanan
+$id_orders = (int)$order['id_orders'];
+$stmt2 = mysqli_prepare($koneksi, "
+    SELECT od.*, m.nama_menu 
+    FROM order_details od 
+    JOIN menus m ON od.id_menus = m.id_menus 
+    WHERE od.id_orders = ?
+");
+mysqli_stmt_bind_param($stmt2, "i", $id_orders);
 mysqli_stmt_execute($stmt2);
-$detail_result = mysqli_stmt_get_result($stmt2);
+$detail_query = mysqli_stmt_get_result($stmt2);
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -35,7 +34,6 @@ $detail_result = mysqli_stmt_get_result($stmt2);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pesanan Berhasil</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="icon" href="ChatGPT Image May 2, 2026, 11_39_59 AM.png">
     <style>
         body {
             background-color: #2d4a3e;
@@ -48,10 +46,13 @@ $detail_result = mysqli_stmt_get_result($stmt2);
             padding: 30px 16px;
             box-sizing: border-box;
         }
+
         .wrapper {
             width: 100%;
             max-width: 420px;
         }
+
+        /* SUKSES HEADER */
         .sukses-header {
             text-align: center;
             margin-bottom: 20px;
@@ -59,12 +60,16 @@ $detail_result = mysqli_stmt_get_result($stmt2);
         .sukses-header .icon { font-size: 60px; }
         .sukses-header h2 { color: #f0e8d0; font-size: 20px; margin: 10px 0 4px; }
         .sukses-header p { color: rgba(240,232,208,0.7); font-size: 13px; }
+
+        /* STRUK */
         .struk {
             background: #fff;
             border-radius: 4px 4px 0 0;
             overflow: hidden;
             box-shadow: 0 8px 32px rgba(0,0,0,0.4);
         }
+
+        /* HEADER STRUK - WARNA BCA */
         .struk-header {
             background: #003f82;
             padding: 18px 20px;
@@ -84,6 +89,8 @@ $detail_result = mysqli_stmt_get_result($stmt2);
         .struk-header .bca-info { color: white; }
         .struk-header .bca-info .title { font-size: 14px; font-weight: bold; }
         .struk-header .bca-info .sub { font-size: 11px; opacity: 0.75; margin-top: 2px; }
+
+        /* STATUS BADGE */
         .status-bar {
             background: #e8f5e9;
             border-bottom: 1px solid #c8e6c9;
@@ -95,7 +102,10 @@ $detail_result = mysqli_stmt_get_result($stmt2);
             color: #2e7d32;
             font-weight: bold;
         }
+
+        /* BODY STRUK */
         .struk-body { padding: 18px 20px; }
+
         .struk-row {
             display: flex;
             justify-content: space-between;
@@ -107,11 +117,15 @@ $detail_result = mysqli_stmt_get_result($stmt2);
         .struk-row:last-child { border-bottom: none; }
         .struk-row .label { color: #888; flex: 1; }
         .struk-row .value { color: #222; font-weight: bold; text-align: right; flex: 1.2; }
+
+        /* GARIS PEMISAH */
         .divider {
             border: none;
             border-top: 2px dashed #ddd;
             margin: 14px 0;
         }
+
+        /* TABEL ITEM */
         .item-list { margin: 10px 0; }
         .item-list .item-header {
             display: flex;
@@ -132,6 +146,8 @@ $detail_result = mysqli_stmt_get_result($stmt2);
         .item-row .item-nama { flex: 2; }
         .item-row .item-qty { flex: 0.5; text-align: center; color: #888; }
         .item-row .item-sub { flex: 1; text-align: right; font-weight: bold; color: #2d4a3e; }
+
+        /* TOTAL */
         .total-box {
             background: #003f82;
             border-radius: 8px;
@@ -143,6 +159,8 @@ $detail_result = mysqli_stmt_get_result($stmt2);
         }
         .total-box .total-label { color: rgba(255,255,255,0.8); font-size: 13px; }
         .total-box .total-nilai { color: #fff; font-size: 20px; font-weight: bold; }
+
+        /* FOOTER STRUK */
         .struk-footer {
             text-align: center;
             padding: 12px 20px 18px;
@@ -152,6 +170,8 @@ $detail_result = mysqli_stmt_get_result($stmt2);
         .struk-footer .no-order { font-size: 11px; color: #aaa; margin-bottom: 6px; }
         .struk-footer .tanggal { font-size: 11px; color: #aaa; }
         .struk-footer .terima-kasih { font-size: 13px; color: #003f82; font-weight: bold; margin-top: 8px; }
+
+        /* GIGI STRUK (zigzag bawah) */
         .struk-zigzag {
             height: 16px;
             background: linear-gradient(135deg, #fff 25%, transparent 25%) -10px 0,
@@ -161,6 +181,8 @@ $detail_result = mysqli_stmt_get_result($stmt2);
             background-size: 20px 20px;
             background-color: #2d4a3e;
         }
+
+        /* TOMBOL */
         .btn-group { margin-top: 20px; display: flex; gap: 10px; }
         .btn-home {
             background-color: #f0e8d0;
@@ -191,6 +213,7 @@ $detail_result = mysqli_stmt_get_result($stmt2);
             transition: background 0.2s;
         }
         .btn-print:hover { background-color: #0056b3; }
+
         @media print {
             body { background: white; padding: 0; }
             .btn-group { display: none; }
@@ -201,36 +224,82 @@ $detail_result = mysqli_stmt_get_result($stmt2);
 </head>
 <body>
     <div class="wrapper">
- 
+
+        <!-- HEADER SUKSES -->
         <div class="sukses-header">
             <div class="icon">✅</div>
             <h2>Pembayaran Berhasil!</h2>
             <p>Struk transaksi kamu ada di bawah ini</p>
         </div>
- 
+
+        <!-- STRUK -->
         <div class="struk">
- 
-            <div class="struk-header">
-                <div class="bca-logo">BCA</div>
-                <div class="bca-info">
-                    <div class="title">KlikBCA / m-BCA</div>
-                    <div class="sub">Bukti Pembayaran Transfer</div>
+
+            <!-- HEADER DINAMIS -->
+            <?php
+            $metode = $order['metode_pembayaran'];
+            if ($metode == 'COD') {
+                $header_bg = 'background: linear-gradient(135deg, #2d4a3e, #4a7c5e);';
+                $icon = '🛵'; $judul = 'Cash on Delivery'; $sub = 'Bayar Langsung ke Kurir';
+            } elseif ($metode == 'Transfer BCA') {
+                $header_bg = 'background: #003f82;';
+                $icon = '🏦'; $judul = 'Transfer BCA'; $sub = 'Bukti Pembayaran Transfer';
+            } elseif ($metode == 'Transfer BRI') {
+                $header_bg = 'background: #003399;';
+                $icon = '🏦'; $judul = 'Transfer BRI'; $sub = 'Bukti Pembayaran Transfer';
+            } elseif ($metode == 'GoPay') {
+                $header_bg = 'background: linear-gradient(135deg, #00aa5b, #007a40);';
+                $icon = '💚'; $judul = 'GoPay'; $sub = 'Bukti Pembayaran E-Wallet';
+            } elseif ($metode == 'OVO') {
+                $header_bg = 'background: linear-gradient(135deg, #4c2a86, #7b4fc2);';
+                $icon = '💜'; $judul = 'OVO'; $sub = 'Bukti Pembayaran E-Wallet';
+            } elseif ($metode == 'ShopeePay') {
+                $header_bg = 'background: linear-gradient(135deg, #ee4d2d, #c73a1f);';
+                $icon = '🧡'; $judul = 'ShopeePay'; $sub = 'Bukti Pembayaran E-Wallet';
+            } else {
+                $header_bg = 'background: #2d4a3e;';
+                $icon = '💳'; $judul = $metode; $sub = 'Bukti Pembayaran';
+            }
+            ?>
+            <?php if($metode == 'COD') : ?>
+            <!-- HEADER COD - PERINGATAN -->
+            <div style="background: linear-gradient(135deg, #2d4a3e, #4a7c5e); padding: 28px 20px; text-align:center; color:#f0e8d0;">
+                <div style="font-size:52px; margin-bottom:10px;">🛵</div>
+                <div style="font-size:18px; font-weight:bold; margin-bottom:6px;">Pesanan Berhasil Dibuat!</div>
+                <div style="font-size:13px; opacity:0.85;">Bayar saat pesanan tiba di tempat kamu</div>
+            </div>
+            <div style="background:#fff8e1; border-bottom: 2px solid #ffc107; padding:16px 20px; display:flex; align-items:center; gap:10px; font-size:14px; color:#7a5c00;">
+                <span style="font-size:22px;">⚠️</span>
+                <div>
+                    <strong>Siapkan uang Rp <?= number_format($order['subtotal'], 0, ',', '.'); ?></strong><br>
+                    <span style="font-size:12px;">Bayar langsung ke kurir saat pesanan tiba. Mohon siapkan uang pas!</span>
                 </div>
             </div>
- 
+            <?php else : ?>
+            <div class="struk-header" style="<?= $header_bg ?>">
+                <div style="font-size:36px;"><?= $icon ?></div>
+                <div class="bca-info">
+                    <div class="title"><?= $judul ?></div>
+                    <div class="sub"><?= $sub ?></div>
+                </div>
+            </div>
+            <!-- STATUS -->
             <div class="status-bar">
                 ✅ Transaksi Berhasil
             </div>
- 
+            <?php endif; ?>
+
+            <!-- BODY -->
             <div class="struk-body">
- 
+
+                <!-- INFO TRANSAKSI -->
                 <div class="struk-row">
                     <span class="label">No. Pesanan</span>
-                    <span class="value">#<?= str_pad($order_id, 6, '0', STR_PAD_LEFT); ?></span>
+                    <span class="value">#<?= str_pad($order['id_orders'], 6, '0', STR_PAD_LEFT); ?></span>
                 </div>
                 <div class="struk-row">
                     <span class="label">Tanggal</span>
-                    <span class="value"><?= htmlspecialchars(date('d M Y, H:i', strtotime($order['tanggal_pesan']))); ?> WIB</span>
+                    <span class="value"><?= date('d M Y, H:i', strtotime($order['tanggal_pesan'])); ?> WIB</span>
                 </div>
                 <div class="struk-row">
                     <span class="label">Kepada</span>
@@ -244,9 +313,10 @@ $detail_result = mysqli_stmt_get_result($stmt2);
                     <span class="label">Alamat Kirim</span>
                     <span class="value" style="font-size:12px;"><?= htmlspecialchars($order['alamat_pengiriman']); ?></span>
                 </div>
- 
+
                 <hr class="divider">
- 
+
+                <!-- DAFTAR ITEM -->
                 <div style="font-size:12px; color:#888; margin-bottom:8px; font-weight:bold;">DETAIL PESANAN</div>
                 <div class="item-list">
                     <div class="item-header">
@@ -254,37 +324,40 @@ $detail_result = mysqli_stmt_get_result($stmt2);
                         <span style="flex:0.5; text-align:center;">Qty</span>
                         <span style="flex:1; text-align:right;">Subtotal</span>
                     </div>
-                    <?php while ($item = mysqli_fetch_assoc($detail_result)) : ?>
+                    <?php while($item = mysqli_fetch_assoc($detail_query)) : ?>
                     <div class="item-row">
-                        <span class="item-nama"><?= htmlspecialchars($item['nama_makanan']); ?></span>
-                        <span class="item-qty"><?= (int)$item['jumlah']; ?>x</span>
-                        <span class="item-sub">Rp <?= number_format((int)$item['subtotal'], 0, ',', '.'); ?></span>
+                        <span class="item-nama"><?= htmlspecialchars($item['nama_menu']); ?></span>
+                        <span class="item-qty"><?= $item['jumlah']; ?>x</span>
+                        <span class="item-sub">Rp <?= number_format($item['subtotal'], 0, ',', '.'); ?></span>
                     </div>
                     <?php endwhile; ?>
                 </div>
- 
+
+                <!-- TOTAL -->
                 <div class="total-box">
                     <span class="total-label">Total Pembayaran</span>
-                    <span class="total-nilai">Rp <?= number_format((int)$order['total_harga'], 0, ',', '.'); ?></span>
+                    <span class="total-nilai">Rp <?= number_format($order['subtotal'], 0, ',', '.'); ?></span>
                 </div>
- 
+
             </div>
- 
+
+            <!-- FOOTER STRUK -->
             <div class="struk-footer">
-                <div class="no-order">No. Ref: BCA<?= htmlspecialchars(date('YmdHis', strtotime($order['tanggal_pesan']))); ?></div>
-                <div class="tanggal"><?= htmlspecialchars(date('d/m/Y H:i:s', strtotime($order['tanggal_pesan']))); ?></div>
+                <div class="no-order">No. Ref: <?= strtoupper(str_replace(' ', '', $metode)) . date('YmdHis', strtotime($order['tanggal_pesan'])); ?></div>
+                <div class="tanggal"><?= date('d/m/Y H:i:s', strtotime($order['tanggal_pesan'])); ?></div>
                 <div class="terima-kasih">Terima Kasih Telah Memesan 🙏</div>
             </div>
         </div>
- 
+
+        <!-- ZIGZAG BAWAH STRUK -->
         <div class="struk-zigzag"></div>
- 
+
+        <!-- TOMBOL -->
         <div class="btn-group">
             <a href="home.php" class="btn-home">🏠 Pesan Lagi</a>
             <button class="btn-print" onclick="window.print()">🖨️ Cetak Struk</button>
         </div>
- 
+
     </div>
 </body>
 </html>
-<?php mysqli_stmt_close($stmt2); ?>
