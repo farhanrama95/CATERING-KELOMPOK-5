@@ -32,7 +32,7 @@ mysqli_stmt_close($stmt);
 if ($data && password_verify($_POST['password'], $data['password'])) {
     session_regenerate_id(true);
  
-    $_SESSION['user_id']      = $data['id'];
+    $_SESSION['user_id']      = $data['id_users'];
     $_SESSION['username']     = $data['username'];
     $_SESSION['nama_lengkap'] = $data['nama_lengkap'];
     $_SESSION['role']         = $data['role'];

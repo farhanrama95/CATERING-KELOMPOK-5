@@ -1,7 +1,8 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 require_once 'guard_pelanggan.php';
-
-session_start();
 include 'koneksi.php';
 
 if (empty($_SESSION['status_login']) || $_SESSION['status_login'] !== true) {
@@ -245,8 +246,8 @@ $nama_lengkap = htmlspecialchars($_SESSION['nama_lengkap']);
         } elseif (mysqli_num_rows($query_menu) > 0) {
             while ($menu = mysqli_fetch_assoc($query_menu)) {
                 $gambar = htmlspecialchars($menu['gambar']);
-                $nama   = htmlspecialchars($menu['nama_makanan']);
-                $id     = htmlspecialchars($menu['id']);
+                $nama   = htmlspecialchars($menu['nama_menu']);
+                $id     = (int)$menu['id_menus'];
                 $harga  = number_format($menu['harga'], 0, ',', '.');
         ?>
             <div class="card-menu">

@@ -1,264 +1,117 @@
 <?php
-require_once 'guard_pelanggan.php';
-
-session_start();
+if (session_status() === PHP_SESSION_NONE) session_start();
 include 'koneksi.php';
- 
-// FIXED: Use empty() for stricter session check
-if (empty($_SESSION['status_login']) || $_SESSION['status_login'] !== true) {
-    header("Location: index.php");
+
+if (empty($_SESSION['status_login']) || $_SESSION['role'] !== 'admin') {
+    header("Location: home.php");
     exit;
 }
- 
-// FIXED: Sanitize session output early
-$nama_lengkap = htmlspecialchars($_SESSION['nama_lengkap']);
- 
-// Handle: Tambah item ke keranjang
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['menu_id'])) {
-    // FIXED: Validate menu_id is a positive integer before storing in session
-    if (!ctype_digit(strval($_POST['menu_id']))) {
-        header("Location: home.php");
-        exit;
-    }
-    $menu_id = (int) $_POST['menu_id'];
- 
-    if (!isset($_SESSION['keranjang'])) {
-        $_SESSION['keranjang'] = [];
-    }
-    if (isset($_SESSION['keranjang'][$menu_id])) {
-        $_SESSION['keranjang'][$menu_id] += 1;
-    } else {
-        $_SESSION['keranjang'][$menu_id] = 1;
-    }
-    header("Location: keranjang.php");
-    exit;
+
+$tanggal = date('Y-m-d');
+if (!empty($_GET['tanggal']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_GET['tanggal'])) {
+    $tanggal = $_GET['tanggal'];
 }
- 
-// FIXED: Kosongkan keranjang uses POST instead of GET
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['aksi'] === 'kosongkan') {
-    unset($_SESSION['keranjang']);
-    header("Location: keranjang.php");
-    exit;
+
+$safe_tanggal = htmlspecialchars($tanggal);
+
+// ✅ JOIN pakai id_users
+$stmt = mysqli_prepare($koneksi, "SELECT orders.*, users.nama_lengkap 
+                                   FROM orders 
+                                   JOIN users ON orders.id_users = users.id_users 
+                                   WHERE DATE(orders.tanggal_pesan) = ?
+                                   ORDER BY orders.tanggal_pesan DESC");
+mysqli_stmt_bind_param($stmt, "s", $tanggal);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
+
+$rows = [];
+$total_harian = 0;
+while ($row = mysqli_fetch_assoc($result)) {
+    $total_harian += $row['subtotal']; // ✅ subtotal
+    $rows[] = $row;
 }
+mysqli_stmt_close($stmt);
 ?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Keranjang - Pemesanan Makanan</title>
+    <title>Laporan Harian</title>
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="ChatGPT Image May 2, 2026, 11_39_59 AM.png">
     <style>
-        body {
-            background-color: #f5f0e8;
-            margin: 0;
-            font-family: Arial, sans-serif;
-        }
- 
-        /* NAVBAR */
-        .navbar {
-            background-color: #2d4a3e;
-            padding: 14px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .navbar .logo {
-            color: #f0e8d0;
-            font-size: 20px;
-            font-weight: bold;
-            letter-spacing: 1px;
-        }
-        .navbar .menu {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .navbar .menu a {
-            color: #f0e8d0;
-            text-decoration: none;
-            font-size: 14px;
-            margin-right: 15px;
-        }
-        .navbar .menu a:hover { color: #fff; }
-        .navbar .menu span {
-            color: #f0e8d0;
-            font-size: 14px;
-            font-weight: bold;
-        }
- 
-        /* FIXED: Navbar responsive */
-        @media (max-width: 768px) {
-            .navbar {
-                flex-direction: column;
-                gap: 10px;
-                padding: 14px 20px;
-                text-align: center;
-            }
-            .navbar .menu { flex-wrap: wrap; justify-content: center; }
-        }
- 
-        /* CONTAINER */
-        .container {
-            padding: 24px 30px;
-            max-width: 900px;
-            margin: 0 auto;
-            width: 95%;
-        }
-        .container h2 {
-            color: #2d4a3e;
-            font-size: 22px;
-            margin-bottom: 16px;
-        }
- 
-        /* FIXED: Table wrapper for mobile scroll */
+        body { background: #f5f0e8; padding: 20px; font-family: Arial, sans-serif; margin: 0; }
+        .container { background: white; padding: 28px; border-radius: 8px; max-width: 900px; margin: 0 auto; width: 95%; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .container h2 { color: #2d4a3e; margin-bottom: 20px; }
+        .filter-form { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+        .filter-form label { font-size: 14px; color: #2d4a3e; font-weight: bold; }
+        .filter-form input[type="date"] { padding: 7px 10px; border: 1.5px solid #b8c9b8; border-radius: 6px; font-size: 14px; color: #2d4a3e; outline: none; }
+        .filter-form input[type="date"]:focus { border-color: #2d4a3e; }
+        .btn-filter { padding: 7px 16px; background: #2d4a3e; color: #f0e8d0; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+        .btn-filter:hover { background: #3b6b54; }
+        .btn-print { padding: 7px 16px; background: #28a745; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+        .btn-print:hover { background: #218838; }
         .table-wrapper { overflow-x: auto; }
- 
-        /* TABEL */
-        .table-keranjang {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-            background: #fff;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(45,74,62,0.12);
-            border: 1px solid #d6e8d6;
-            min-width: 500px;
-        }
-        .table-keranjang th, .table-keranjang td {
-            padding: 13px 15px;
-            border: 1px solid #d6e8d6;
-            text-align: left;
-            font-size: 14px;
-        }
-        .table-keranjang th {
-            background-color: #2d4a3e;
-            color: #f0e8d0;
-            font-weight: bold;
-        }
-        .table-keranjang tr:nth-child(even) { background-color: #f5f0e8; }
-        .table-keranjang tr:hover { background-color: #e8f0e8; }
+        .table-laporan { width: 100%; border-collapse: collapse; min-width: 500px; font-size: 14px; }
+        .table-laporan th { background: #2d4a3e; color: #f0e8d0; padding: 11px 12px; text-align: left; border: 1px solid #ccc; }
+        .table-laporan td { border: 1px solid #ccc; padding: 10px 12px; }
+        .table-laporan tr:nth-child(even) td { background: #f5f0e8; }
+        .table-laporan tr:hover td { background: #e8f0e8; }
+        .row-total td { font-weight: bold; background: #f0e8d0 !important; }
         .text-right { text-align: right; }
- 
-        /* TOMBOL */
-        .btn-kosongkan {
-            background-color: #fff;
-            color: #c0392b;
-            border: 2px solid #c0392b;
-            padding: 10px 18px;
-            border-radius: 8px;
-            display: inline-block;
-            margin-top: 20px;
-            font-weight: bold;
-            font-size: 13px;
-            margin-right: 10px;
-            cursor: pointer;
-            font-family: Arial, sans-serif;
-            transition: all 0.2s;
+        .empty-msg { color: #5a7a6a; padding: 16px 0; font-size: 14px; }
+        .btn-back { display: inline-block; margin-top: 20px; color: #2d4a3e; font-weight: bold; font-size: 14px; text-decoration: none; }
+        .btn-back:hover { text-decoration: underline; }
+        @media (max-width: 600px) { .filter-form { flex-direction: column; align-items: flex-start; } }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; border: none; }
         }
-        .btn-kosongkan:hover { background-color: #c0392b; color: white; }
- 
-        .btn-checkout {
-            background-color: #2d4a3e;
-            color: #f0e8d0;
-            padding: 10px 18px;
-            text-decoration: none;
-            border-radius: 8px;
-            display: inline-block;
-            margin-top: 20px;
-            font-weight: bold;
-            font-size: 13px;
-            transition: all 0.2s;
-        }
-        .btn-checkout:hover { background-color: #3b6b54; }
     </style>
 </head>
 <body>
- 
-    <!-- NAVBAR -->
-    <nav class="navbar">
-        <div class="logo">Chandra Catering</div>
-        <div class="menu">
-            <a href="home.php">🏠 Kembali ke Beranda</a>
-            <!-- FIXED: Sanitized session variable -->
-            <span>Halo, <?= $nama_lengkap ?></span>
-        </div>
-    </nav>
- 
     <div class="container">
-        <h2>🛒 Keranjang Belanja</h2>
- 
-        <?php if (empty($_SESSION['keranjang'])) : ?>
-            <p style="margin-top:20px; color:#5a7a6a;">
-                Keranjang kamu masih kosong. Yuk
-                <a href="home.php" style="color:#2d4a3e; font-weight:bold;">pilih makanan</a> dulu!
-            </p>
+        <h2>Laporan Penjualan Harian</h2>
+
+        <form method="GET" class="filter-form no-print">
+            <label for="tanggal">Pilih Tanggal:</label>
+            <input type="date" id="tanggal" name="tanggal" value="<?= $safe_tanggal ?>">
+            <button type="submit" class="btn-filter">Filter</button>
+            <button type="button" class="btn-print" onclick="window.print()">🖨️ Cetak Laporan</button>
+        </form>
+
+        <?php if (empty($rows)) : ?>
+            <p class="empty-msg">Tidak ada pesanan pada tanggal <?= $safe_tanggal ?>.</p>
         <?php else : ?>
             <div class="table-wrapper">
-                <table class="table-keranjang">
+                <table class="table-laporan">
                     <thead>
                         <tr>
-                            <th>No</th>
-                            <th>Menu</th>
-                            <th>Harga Satuan</th>
-                            <th>Jumlah</th>
-                            <th>Subtotal</th>
+                            <th>ID Order</th>
+                            <th>Nama Pelanggan</th>
+                            <th>Total</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php
-                        $no = 1;
-                        $total_belanja = 0;
-                        foreach ($_SESSION['keranjang'] as $id_menu => $jumlah) :
-                            // FIXED: Validate each session key is a positive integer
-                            if (!ctype_digit(strval($id_menu))) continue;
-                            $id_menu = (int) $id_menu;
- 
-                            // FIXED: Prepared statement to prevent SQL injection
-                            $stmt = mysqli_prepare($koneksi, "SELECT * FROM menus WHERE id = ?");
-                            mysqli_stmt_bind_param($stmt, "i", $id_menu);
-                            mysqli_stmt_execute($stmt);
-                            $result = mysqli_stmt_get_result($stmt);
-                            $menu = mysqli_fetch_assoc($result);
-                            mysqli_stmt_close($stmt);
- 
-                            // FIXED: Skip if menu no longer exists in DB
-                            if (!$menu) continue;
- 
-                            // FIXED: Sanitize output
-                            $nama_menu = htmlspecialchars($menu['nama_makanan']);
-                            $subtotal  = $menu['harga'] * $jumlah;
-                            $total_belanja += $subtotal;
-                        ?>
-                            <tr>
-                                <td><?= $no++ ?></td>
-                                <td><?= $nama_menu ?></td>
-                                <td>Rp <?= number_format($menu['harga'], 0, ',', '.') ?></td>
-                                <td><?= (int) $jumlah ?></td>
-                                <td>Rp <?= number_format($subtotal, 0, ',', '.') ?></td>
-                            </tr>
+                        <?php foreach ($rows as $row) : ?>
+                        <tr>
+                            <td>#<?= (int)$row['id_orders'] ?></td>              <!-- ✅ id_orders -->
+                            <td><?= htmlspecialchars($row['nama_lengkap']) ?></td>
+                            <td>Rp <?= number_format($row['subtotal'], 0, ',', '.') ?></td>  <!-- ✅ subtotal -->
+                        </tr>
                         <?php endforeach; ?>
-                        <tr style="background-color:#f0e8d0;">
-                            <td colspan="4" class="text-right"><strong>Total Keseluruhan</strong></td>
-                            <td><strong style="color:#2d4a3e;">Rp <?= number_format($total_belanja, 0, ',', '.') ?></strong></td>
+                        <tr class="row-total">
+                            <td colspan="2" class="text-right">Total Omzet Hari Ini:</td>
+                            <td>Rp <?= number_format($total_harian, 0, ',', '.') ?></td>
                         </tr>
                     </tbody>
                 </table>
             </div>
- 
-            <!-- FIXED: Kosongkan uses POST form instead of GET link -->
-            <form action="keranjang.php" method="POST" style="display:inline;"
-                  onsubmit="return confirm('Yakin ingin mengosongkan keranjang?')">
-                <input type="hidden" name="aksi" value="kosongkan">
-                <button type="submit" class="btn-kosongkan">🗑️ Kosongkan Keranjang</button>
-            </form>
- 
-            <a href="checkout.php" class="btn-checkout">✅ Lanjut Checkout</a>
         <?php endif; ?>
+
+        <a href="admin.php" class="btn-back no-print">← Kembali ke Dashboard</a>
     </div>
- 
 </body>
 </html>
- 
