@@ -34,6 +34,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['ak
     header("Location: keranjang.php");
     exit;
 }
+
+// Update jumlah item di keranjang
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['aksi'] === 'update_jumlah') {
+    $id_menu = (int)$_POST['id_menu'];
+    $jumlah  = (int)$_POST['jumlah'];
+
+    if ($jumlah >= 1 && isset($_SESSION['keranjang'][$id_menu])) {
+        $_SESSION['keranjang'][$id_menu] = $jumlah;
+    } elseif ($jumlah < 1) {
+        unset($_SESSION['keranjang'][$id_menu]); // hapus otomatis jika 0
+    }
+
+    header("Location: keranjang.php");
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -80,6 +95,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['ak
         .table-keranjang tr:nth-child(even) { background-color: #f5f0e8; }
         .table-keranjang tr:hover { background-color: #e8f0e8; }
         .text-right { text-align: right; }
+
+        /* Tombol +/- */
+        .qty-form { display: flex; align-items: center; gap: 6px; margin: 0; }
+        .btn-qty {
+            width: 28px; height: 28px;
+            border: none; border-radius: 5px;
+            cursor: pointer; font-size: 16px;
+            font-weight: bold; line-height: 1;
+            transition: opacity 0.2s;
+        }
+        .btn-qty:hover { opacity: 0.85; }
+        .btn-minus { background-color: #c0392b; color: white; }
+        .btn-plus  { background-color: #2d4a3e; color: white; }
+        .qty-label { min-width: 28px; text-align: center; font-weight: bold; font-size: 14px; }
+
         .btn-kosongkan {
             background-color: #fff;
             color: #c0392b;
@@ -149,7 +179,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['ak
                         if (!ctype_digit(strval($id_menu))) continue;
                         $id_menu = (int)$id_menu;
 
-                        // ✅ WHERE id_menus
                         $stmt = mysqli_prepare($koneksi, "SELECT * FROM menus WHERE id_menus = ?");
                         mysqli_stmt_bind_param($stmt, "i", $id_menu);
                         mysqli_stmt_execute($stmt);
@@ -159,7 +188,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['ak
 
                         if (!$menu) continue;
 
-                        $nama_menu = htmlspecialchars($menu['nama_menu']); // ✅ nama_menu
+                        $nama_menu = htmlspecialchars($menu['nama_menu']);
                         $subtotal  = $menu['harga'] * $jumlah;
                         $total_belanja += $subtotal;
                     ?>
@@ -167,7 +196,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['ak
                         <td><?= $no++ ?></td>
                         <td><?= $nama_menu ?></td>
                         <td>Rp <?= number_format($menu['harga'], 0, ',', '.') ?></td>
-                        <td><?= (int)$jumlah ?></td>
+                        <td>
+                            <!-- Tombol kurangi -->
+                            <form action="keranjang.php" method="POST" class="qty-form">
+                                <input type="hidden" name="aksi" value="update_jumlah">
+                                <input type="hidden" name="id_menu" value="<?= $id_menu ?>">
+                                <button type="submit" name="jumlah" value="<?= $jumlah - 1 ?>"
+                                        class="btn-qty btn-minus">−</button>
+                                <span class="qty-label"><?= (int)$jumlah ?></span>
+                                <button type="submit" name="jumlah" value="<?= $jumlah + 1 ?>"
+                                        class="btn-qty btn-plus">+</button>
+                            </form>
+                        </td>
                         <td>Rp <?= number_format($subtotal, 0, ',', '.') ?></td>
                     </tr>
                     <?php endforeach; ?>

@@ -134,6 +134,7 @@ if (empty($_SESSION['csrf_token'])) {
         <ul class="nav-menu" id="nav-menu">
             <li><a href="manajemen_menu.php">🍽️ Kelola Menu</a></li>
             <li><a href="laporan_harian.php">📊 Laporan Harian</a></li>
+            <li><a href="laporan_bulanan.php">📅 Laporan Bulanan</a></li>
             <li><a href="logout.php" class="btn-logout">Logout</a></li>
         </ul>
     </nav>
